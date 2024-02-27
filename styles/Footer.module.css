@@ -1,0 +1,21 @@
+/** @format */
+
+.wrapper {
+  background: rgb(255, 255, 255);
+  background: linear-gradient(
+    0deg,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(239, 239, 239, 1) 100%
+  );
+  display: flex;
+  align-items: center;
+  padding: 20px 10px;
+}
+.container {
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+}
+.text {
+  letter-spacing: 1;
+}

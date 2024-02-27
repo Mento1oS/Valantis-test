@@ -1,94 +1,68 @@
-import Image from "next/image";
+/** @format */
+
 import styles from "./page.module.css";
+import { getDataRequest, getFilteredData } from "@/utils";
+import { FilterProps, Product } from "@/types";
+import { NavBar, ProductComponent, SearchBlock } from "@/components";
 
-export default function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: FilterProps;
+}) {
+  const idsArray: string[] =
+    Object.keys(searchParams).length === 0 ||
+    (!searchParams.price && !searchParams.product && !searchParams.brand)
+      ? await getDataRequest({
+          action: "get_ids",
+          params: {
+            offset: searchParams.page
+              ? 50 * (Number(searchParams.page) - 1)
+              : 0,
+            limit: 50,
+          },
+          retry: true,
+        })
+      : await getFilteredData({ searchParams });
+  const productsArray: Product[] = await getDataRequest({
+    action: "get_items",
+    params: {
+      ids: idsArray,
+    },
+    retry: true,
+  });
+  const isBackNavDisabled =
+    !searchParams.page || String(searchParams.page) === "1";
+  const isForwardNavDisabled = productsArray.length < 50;
+  const isDataEmpty =
+    !Array.isArray(productsArray) || productsArray.length < 1 || !productsArray;
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
+    <main className={styles.wrapper}>
+      <div className={styles.container}>
+        <SearchBlock />
+        <NavBar
+          isBackNavDisabled={isBackNavDisabled}
+          isForwardNavDisabled={isForwardNavDisabled}
         />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
+        <div className={styles.content__bar}>
+          {!isDataEmpty
+            ? productsArray
+                .filter((value, index, self) => {
+                  return self.findIndex((v) => v.id === value.id) === index;
+                })
+                .map((product) => {
+                  return (
+                    <ProductComponent
+                      key={product.id}
+                      id={product.id}
+                      brand={product.brand}
+                      price={product.price}
+                      product={product.product}
+                    />
+                  );
+                })
+            : ""}
+        </div>
       </div>
     </main>
   );
